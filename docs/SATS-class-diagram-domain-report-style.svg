@@ -1,0 +1,241 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1180" viewBox="0 0 1700 1180">
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 10" refX="11" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 1 1 L 11 5 L 1 9" fill="none" stroke="#222" stroke-width="1.1"/>
+    </marker>
+    <marker id="diamond" viewBox="0 0 12 12" refX="2" refY="6" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M 2 6 L 6 2 L 10 6 L 6 10 z" fill="#fff" stroke="#222" stroke-width="1.1"/>
+    </marker>
+    <marker id="filledDiamond" viewBox="0 0 12 12" refX="2" refY="6" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M 2 6 L 6 2 L 10 6 L 6 10 z" fill="#222" stroke="#222" stroke-width="1.1"/>
+    </marker>
+    <style>
+      .page{fill:#fff}
+      .title{font:700 34px "Times New Roman",serif;fill:#000}
+      .caption{font:italic 28px "Times New Roman",serif;fill:#2b5fae}
+      .box{fill:#fff;stroke:#222;stroke-width:1.15}
+      .header{font:italic 15px "Times New Roman",serif;fill:#111}
+      .name{font:700 16px Arial,Helvetica,sans-serif;fill:#111}
+      .text{font:13px Arial,Helvetica,sans-serif;fill:#111}
+      .line{stroke:#222;stroke-width:1.05;fill:none}
+      .inherit{stroke:#222;stroke-width:1.05;fill:none;marker-end:url(#arrow)}
+      .assoc{stroke:#222;stroke-width:1.05;fill:none}
+      .agg{stroke:#222;stroke-width:1.05;fill:none;marker-start:url(#diamond)}
+      .comp{stroke:#222;stroke-width:1.05;fill:none;marker-start:url(#filledDiamond)}
+      .dash{stroke:#222;stroke-width:1.0;stroke-dasharray:5 4;fill:none}
+      .label{font:12px Arial,Helvetica,sans-serif;fill:#111}
+    </style>
+  </defs>
+
+  <rect class="page" x="0" y="0" width="1700" height="1180"/>
+  <text class="title" x="110" y="78">3.5   Class Diagram</text>
+
+  <!-- User hierarchy -->
+  <g id="User">
+    <rect class="box" x="720" y="95" width="220" height="135"/>
+    <text class="header" x="830" y="118" text-anchor="middle">User</text>
+    <line class="line" x1="720" y1="128" x2="940" y2="128"/>
+    <text class="text" x="735" y="150">-userId: string</text>
+    <text class="text" x="735" y="170">-email: string</text>
+    <text class="text" x="735" y="190">-password: string</text>
+    <text class="text" x="735" y="210">-name: string</text>
+    <line class="line" x1="720" y1="220" x2="940" y2="220"/>
+    <text class="text" x="735" y="245">+verifyLogin()</text>
+  </g>
+
+  <g id="StaffUser">
+    <rect class="box" x="465" y="320" width="245" height="185"/>
+    <text class="header" x="587" y="343" text-anchor="middle">StaffUser</text>
+    <line class="line" x1="465" y1="353" x2="710" y2="353"/>
+    <text class="text" x="480" y="375">-role: string</text>
+    <text class="text" x="480" y="395">-assignedAssets: int</text>
+    <text class="text" x="480" y="415">-scanHistoryCount: int</text>
+    <text class="text" x="480" y="435">-status: string</text>
+    <line class="line" x1="465" y1="445" x2="710" y2="445"/>
+    <text class="text" x="480" y="468">+login()</text>
+    <text class="text" x="480" y="488">+viewAssets()</text>
+  </g>
+
+  <g id="SuperAdmin">
+    <rect class="box" x="1010" y="320" width="245" height="185"/>
+    <text class="header" x="1132" y="343" text-anchor="middle">SuperAdmin</text>
+    <line class="line" x1="1010" y1="353" x2="1255" y2="353"/>
+    <text class="text" x="1025" y="375">-role: string</text>
+    <text class="text" x="1025" y="395">-managedUsers: int</text>
+    <text class="text" x="1025" y="415">-managedAssets: int</text>
+    <text class="text" x="1025" y="435">-managedRooms: int</text>
+    <line class="line" x1="1010" y1="445" x2="1255" y2="445"/>
+    <text class="text" x="1025" y="468">+createUser()</text>
+    <text class="text" x="1025" y="488">+assignAsset()</text>
+  </g>
+
+  <!-- Main entities -->
+  <g id="Asset">
+    <rect class="box" x="360" y="585" width="260" height="240"/>
+    <text class="header" x="490" y="608" text-anchor="middle">Asset</text>
+    <line class="line" x1="360" y1="618" x2="620" y2="618"/>
+    <text class="text" x="375" y="640">-assetId: string</text>
+    <text class="text" x="375" y="660">-assetTag: string</text>
+    <text class="text" x="375" y="680">-name: string</text>
+    <text class="text" x="375" y="700">-description: string</text>
+    <text class="text" x="375" y="720">-assetType: string</text>
+    <text class="text" x="375" y="740">-status: string</text>
+    <text class="text" x="375" y="760">-lastScanned: Date</text>
+    <text class="text" x="375" y="780">-scanCount: int</text>
+    <line class="line" x1="360" y1="790" x2="620" y2="790"/>
+    <text class="text" x="375" y="813">+updateAsset()</text>
+  </g>
+
+  <g id="Room">
+    <rect class="box" x="720" y="585" width="260" height="240"/>
+    <text class="header" x="850" y="608" text-anchor="middle">Room</text>
+    <line class="line" x1="720" y1="618" x2="980" y2="618"/>
+    <text class="text" x="735" y="640">-roomId: string</text>
+    <text class="text" x="735" y="660">-code: string</text>
+    <text class="text" x="735" y="680">-name: string</text>
+    <text class="text" x="735" y="700">-building: string</text>
+    <text class="text" x="735" y="720">-floor: string</text>
+    <text class="text" x="735" y="740">-capacity: int</text>
+    <text class="text" x="735" y="760">-lastScanned: Date</text>
+    <text class="text" x="735" y="780">-scanCount: int</text>
+    <line class="line" x1="720" y1="790" x2="980" y2="790"/>
+    <text class="text" x="735" y="813">+updateRoom()</text>
+  </g>
+
+  <g id="ScanLog">
+    <rect class="box" x="1080" y="585" width="260" height="240"/>
+    <text class="header" x="1210" y="608" text-anchor="middle">ScanLog</text>
+    <line class="line" x1="1080" y1="618" x2="1340" y2="618"/>
+    <text class="text" x="1095" y="640">-scanId: string</text>
+    <text class="text" x="1095" y="660">-qrData: string</text>
+    <text class="text" x="1095" y="680">-qrType: string</text>
+    <text class="text" x="1095" y="700">-scannedAt: Date</text>
+    <text class="text" x="1095" y="720">-action: string</text>
+    <text class="text" x="1095" y="740">-resolvedEntity: string</text>
+    <text class="text" x="1095" y="760">-entityId: string</text>
+    <line class="line" x1="1080" y1="790" x2="1340" y2="790"/>
+    <text class="text" x="1095" y="813">+recordScan()</text>
+  </g>
+
+  <!-- Supporting classes -->
+  <g id="QRCode">
+    <rect class="box" x="122" y="575" width="180" height="150"/>
+    <text class="header" x="212" y="598" text-anchor="middle">QRCode</text>
+    <line class="line" x1="122" y1="608" x2="302" y2="608"/>
+    <text class="text" x="137" y="630">-qrValue: string</text>
+    <text class="text" x="137" y="650">-qrType: string</text>
+    <text class="text" x="137" y="670">-timestamp: Date</text>
+    <line class="line" x1="122" y1="680" x2="302" y2="680"/>
+    <text class="text" x="137" y="703">+generate()</text>
+  </g>
+
+  <g id="QRStyle">
+    <rect class="box" x="118" y="800" width="185" height="165"/>
+    <text class="header" x="210" y="823" text-anchor="middle">QRStyle</text>
+    <line class="line" x1="118" y1="833" x2="303" y2="833"/>
+    <text class="text" x="133" y="855">-type: string</text>
+    <text class="text" x="133" y="875">-color: string</text>
+    <text class="text" x="133" y="895">-backgroundColor: string</text>
+    <text class="text" x="133" y="915">-size: int</text>
+    <line class="line" x1="118" y1="925" x2="303" y2="925"/>
+    <text class="text" x="133" y="948">+applyStyle()</text>
+  </g>
+
+  <g id="CustomField">
+    <rect class="box" x="390" y="905" width="200" height="145"/>
+    <text class="header" x="490" y="928" text-anchor="middle">CustomField</text>
+    <line class="line" x1="390" y1="938" x2="590" y2="938"/>
+    <text class="text" x="405" y="960">-fieldName: string</text>
+    <text class="text" x="405" y="980">-fieldValue: string</text>
+    <text class="text" x="405" y="1000">-fieldType: string</text>
+    <line class="line" x1="390" y1="1010" x2="590" y2="1010"/>
+    <text class="text" x="405" y="1033">+updateField()</text>
+  </g>
+
+  <g id="Location">
+    <rect class="box" x="748" y="905" width="205" height="145"/>
+    <text class="header" x="850" y="928" text-anchor="middle">Location</text>
+    <line class="line" x1="748" y1="938" x2="953" y2="938"/>
+    <text class="text" x="763" y="960">-latitude: number</text>
+    <text class="text" x="763" y="980">-longitude: number</text>
+    <text class="text" x="763" y="1000">-accuracy: number</text>
+    <line class="line" x1="748" y1="1010" x2="953" y2="1010"/>
+    <text class="text" x="763" y="1033">+updateLocation()</text>
+  </g>
+
+  <g id="DeviceInfo">
+    <rect class="box" x="1105" y="905" width="210" height="145"/>
+    <text class="header" x="1210" y="928" text-anchor="middle">DeviceInfo</text>
+    <line class="line" x1="1105" y1="938" x2="1315" y2="938"/>
+    <text class="text" x="1120" y="960">-platform: string</text>
+    <text class="text" x="1120" y="980">-version: string</text>
+    <text class="text" x="1120" y="1000">-model: string</text>
+    <line class="line" x1="1105" y1="1010" x2="1315" y2="1010"/>
+    <text class="text" x="1120" y="1033">+captureDeviceInfo()</text>
+  </g>
+
+  <g id="AssetAssignment">
+    <rect class="box" x="1388" y="575" width="190" height="165"/>
+    <text class="header" x="1483" y="598" text-anchor="middle">AssetAssignment</text>
+    <line class="line" x1="1388" y1="608" x2="1578" y2="608"/>
+    <text class="text" x="1403" y="630">-assignmentId: string</text>
+    <text class="text" x="1403" y="650">-assignedDate: Date</text>
+    <text class="text" x="1403" y="670">-assignmentStatus: string</text>
+    <line class="line" x1="1388" y1="680" x2="1578" y2="680"/>
+    <text class="text" x="1403" y="703">+assignAsset()</text>
+  </g>
+
+  <!-- Inheritance -->
+  <path class="inherit" d="M587 320 V260 H830"/>
+  <path class="inherit" d="M1132 320 V260 H830"/>
+
+  <!-- User to core entities -->
+  <path class="assoc" d="M587 505 V548 H490 V585"/>
+  <text class="label" x="505" y="566">1..* manages/uses</text>
+  <path class="assoc" d="M1132 505 V548 H850 V585"/>
+  <text class="label" x="925" y="566">1..* manages</text>
+  <path class="assoc" d="M1132 505 V548 H1210 V585"/>
+  <text class="label" x="1144" y="566">1..* reviews</text>
+
+  <!-- QR and styles -->
+  <path class="assoc" d="M302 640 H360"/>
+  <text class="label" x="314" y="630">encodes</text>
+  <path class="assoc" d="M302 665 H720"/>
+  <text class="label" x="500" y="655">encodes</text>
+  <path class="comp" d="M360 760 H303"/>
+  <text class="label" x="305" y="750">1</text>
+  <path class="comp" d="M720 760 H303"/>
+  <text class="label" x="515" y="750">1</text>
+
+  <!-- Asset relationships -->
+  <path class="comp" d="M490 825 V905"/>
+  <text class="label" x="503" y="870">0..*</text>
+  <path class="assoc" d="M620 705 H720"/>
+  <text class="label" x="645" y="695">0..* placed in 1</text>
+  <path class="assoc" d="M620 670 H1388"/>
+  <text class="label" x="920" y="660">assigned through</text>
+
+  <!-- Room relationships -->
+  <path class="comp" d="M850 825 V905"/>
+  <text class="label" x="863" y="870">1</text>
+
+  <!-- ScanLog relationships -->
+  <path class="assoc" d="M1080 670 H620"/>
+  <text class="label" x="815" y="660">logs asset scans</text>
+  <path class="assoc" d="M1080 710 H980"/>
+  <text class="label" x="995" y="700">logs room scans</text>
+  <path class="comp" d="M1210 825 V905"/>
+  <text class="label" x="1223" y="870">1</text>
+  <path class="comp" d="M1180 825 C1180 865 1005 865 1005 905"/>
+  <text class="label" x="1030" y="885">1</text>
+  <path class="assoc" d="M940 162 H1483 V575"/>
+  <text class="label" x="1290" y="182">creates assignments</text>
+
+  <!-- Assignment relationships -->
+  <path class="assoc" d="M1388 700 H1340"/>
+  <text class="label" x="1350" y="690">for scans</text>
+  <path class="assoc" d="M1483 740 V785 H235 V230"/>
+  <text class="label" x="1495" y="760">links</text>
+
+  <text class="caption" x="850" y="1125" text-anchor="middle">Fig 45 - SATS Class Diagram</text>
+</svg>

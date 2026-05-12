@@ -1,0 +1,257 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1650" height="1200" viewBox="0 0 1650 1200">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#222"/>
+    </marker>
+    <marker id="openArrow" viewBox="0 0 12 10" refX="11" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 1 1 L 11 5 L 1 9" fill="none" stroke="#222" stroke-width="1.2"/>
+    </marker>
+    <style>
+      .page{fill:#fff}
+      .title{font:700 34px "Times New Roman",serif;fill:#000}
+      .caption{font:italic 28px "Times New Roman",serif;fill:#2b5fae}
+      .box{fill:#fff;stroke:#222;stroke-width:1.2}
+      .header{font:700 17px Arial,Helvetica,sans-serif;fill:#111}
+      .text{font:14px Arial,Helvetica,sans-serif;fill:#111}
+      .tiny{font:12px Arial,Helvetica,sans-serif;fill:#111}
+      .line{stroke:#222;stroke-width:1.1;fill:none}
+      .arrow{stroke:#222;stroke-width:1.1;fill:none;marker-end:url(#arrow)}
+      .open{stroke:#222;stroke-width:1.1;fill:none;marker-end:url(#openArrow)}
+      .dash{stroke:#222;stroke-width:1;stroke-dasharray:5 4;fill:none}
+      .mid{stroke:#222;stroke-width:1}
+      .label{font:12px Arial,Helvetica,sans-serif;fill:#111}
+    </style>
+  </defs>
+
+  <rect class="page" x="0" y="0" width="1650" height="1200"/>
+  <text class="title" x="120" y="80">3.5   Class Diagram</text>
+
+  <!-- Top level -->
+  <g id="Application">
+    <rect class="box" x="670" y="125" width="260" height="115"/>
+    <text class="header" x="800" y="150" text-anchor="middle">SATS Application</text>
+    <line class="mid" x1="670" y1="162" x2="930" y2="162"/>
+    <text class="text" x="685" y="185">+mobileApp: MobileApp</text>
+    <text class="text" x="685" y="207">+webDashboard: WebDashboard</text>
+    <line class="mid" x1="670" y1="216" x2="930" y2="216"/>
+    <text class="text" x="685" y="234">+start()</text>
+  </g>
+
+  <g id="MobileApp">
+    <rect class="box" x="170" y="300" width="230" height="150"/>
+    <text class="header" x="285" y="325" text-anchor="middle">MobileApp</text>
+    <line class="mid" x1="170" y1="338" x2="400" y2="338"/>
+    <text class="text" x="185" y="360">+userSession: AuthContext</text>
+    <text class="text" x="185" y="382">+scanner: QRScanner</text>
+    <line class="mid" x1="170" y1="392" x2="400" y2="392"/>
+    <text class="text" x="185" y="414">+login()</text>
+    <text class="text" x="185" y="436">+scanQRCode()</text>
+  </g>
+
+  <g id="WebDashboard">
+    <rect class="box" x="470" y="300" width="250" height="150"/>
+    <text class="header" x="595" y="325" text-anchor="middle">WebDashboard</text>
+    <line class="mid" x1="470" y1="338" x2="720" y2="338"/>
+    <text class="text" x="485" y="360">+userSession: AuthContext</text>
+    <text class="text" x="485" y="382">+dashboardStats: DashboardStats</text>
+    <line class="mid" x1="470" y1="392" x2="720" y2="392"/>
+    <text class="text" x="485" y="414">+manageAssets()</text>
+    <text class="text" x="485" y="436">+viewReports()</text>
+  </g>
+
+  <g id="AuthContext">
+    <rect class="box" x="790" y="300" width="245" height="165"/>
+    <text class="header" x="912" y="325" text-anchor="middle">AuthContext</text>
+    <line class="mid" x1="790" y1="338" x2="1035" y2="338"/>
+    <text class="text" x="805" y="360">+user: User</text>
+    <text class="text" x="805" y="382">+isAuthenticated: boolean</text>
+    <text class="text" x="805" y="404">+isLoading: boolean</text>
+    <line class="mid" x1="790" y1="414" x2="1035" y2="414"/>
+    <text class="text" x="805" y="436">+login()</text>
+    <text class="text" x="805" y="458">+logout()</text>
+  </g>
+
+  <g id="ApiClient">
+    <rect class="box" x="1110" y="300" width="245" height="150"/>
+    <text class="header" x="1232" y="325" text-anchor="middle">ApiClient</text>
+    <line class="mid" x1="1110" y1="338" x2="1355" y2="338"/>
+    <text class="text" x="1125" y="360">+baseURL: string</text>
+    <text class="text" x="1125" y="382">+token: string</text>
+    <line class="mid" x1="1110" y1="392" x2="1355" y2="392"/>
+    <text class="text" x="1125" y="414">+sendRequest()</text>
+    <text class="text" x="1125" y="436">+attachToken()</text>
+  </g>
+
+  <!-- Service classes -->
+  <g id="AuthAPI">
+    <rect class="box" x="115" y="560" width="195" height="125"/>
+    <text class="header" x="212" y="585" text-anchor="middle">AuthAPI</text>
+    <line class="mid" x1="115" y1="598" x2="310" y2="598"/>
+    <text class="text" x="130" y="622">+login()</text>
+    <text class="text" x="130" y="644">+register()</text>
+    <text class="text" x="130" y="666">+getProfile()</text>
+  </g>
+
+  <g id="AssetsAPI">
+    <rect class="box" x="350" y="545" width="205" height="155"/>
+    <text class="header" x="452" y="570" text-anchor="middle">AssetsAPI</text>
+    <line class="mid" x1="350" y1="583" x2="555" y2="583"/>
+    <text class="text" x="365" y="607">+getAll()</text>
+    <text class="text" x="365" y="629">+createAsset()</text>
+    <text class="text" x="365" y="651">+updateAsset()</text>
+    <text class="text" x="365" y="673">+generateQR()</text>
+  </g>
+
+  <g id="RoomsAPI">
+    <rect class="box" x="595" y="545" width="205" height="155"/>
+    <text class="header" x="697" y="570" text-anchor="middle">RoomsAPI</text>
+    <line class="mid" x1="595" y1="583" x2="800" y2="583"/>
+    <text class="text" x="610" y="607">+getAll()</text>
+    <text class="text" x="610" y="629">+createRoom()</text>
+    <text class="text" x="610" y="651">+getAssets()</text>
+    <text class="text" x="610" y="673">+scanRoom()</text>
+  </g>
+
+  <g id="QRAPI">
+    <rect class="box" x="840" y="545" width="205" height="155"/>
+    <text class="header" x="942" y="570" text-anchor="middle">QRAPI</text>
+    <line class="mid" x1="840" y1="583" x2="1045" y2="583"/>
+    <text class="text" x="855" y="607">+resolveQR()</text>
+    <text class="text" x="855" y="629">+getScanHistory()</text>
+    <text class="text" x="855" y="651">+getScanStats()</text>
+    <text class="text" x="855" y="673">+logScan()</text>
+  </g>
+
+  <g id="UsersAPI">
+    <rect class="box" x="1085" y="545" width="205" height="155"/>
+    <text class="header" x="1187" y="570" text-anchor="middle">UsersAPI</text>
+    <line class="mid" x1="1085" y1="583" x2="1290" y2="583"/>
+    <text class="text" x="1100" y="607">+getUsers()</text>
+    <text class="text" x="1100" y="629">+createUser()</text>
+    <text class="text" x="1100" y="651">+updateUser()</text>
+    <text class="text" x="1100" y="673">+changeRole()</text>
+  </g>
+
+  <g id="QRCodeService">
+    <rect class="box" x="1330" y="560" width="215" height="125"/>
+    <text class="header" x="1437" y="585" text-anchor="middle">QRCodeService</text>
+    <line class="mid" x1="1330" y1="598" x2="1545" y2="598"/>
+    <text class="text" x="1345" y="622">+generateQR()</text>
+    <text class="text" x="1345" y="644">+generateAssetQR()</text>
+    <text class="text" x="1345" y="666">+generateRoomQR()</text>
+  </g>
+
+  <!-- Domain entities -->
+  <g id="User">
+    <rect class="box" x="120" y="820" width="230" height="165"/>
+    <text class="header" x="235" y="845" text-anchor="middle">User</text>
+    <line class="mid" x1="120" y1="858" x2="350" y2="858"/>
+    <text class="text" x="135" y="882">+_id: ObjectId</text>
+    <text class="text" x="135" y="904">+email: string</text>
+    <text class="text" x="135" y="926">+password: string</text>
+    <text class="text" x="135" y="948">+name: string</text>
+    <text class="text" x="135" y="970">+role: string</text>
+  </g>
+
+  <g id="Asset">
+    <rect class="box" x="430" y="790" width="255" height="225"/>
+    <text class="header" x="557" y="815" text-anchor="middle">Asset</text>
+    <line class="mid" x1="430" y1="828" x2="685" y2="828"/>
+    <text class="text" x="445" y="852">+_id: ObjectId</text>
+    <text class="text" x="445" y="874">+assetTag: string</text>
+    <text class="text" x="445" y="896">+name: string</text>
+    <text class="text" x="445" y="918">+assetType: string</text>
+    <text class="text" x="445" y="940">+status: string</text>
+    <text class="text" x="445" y="962">+ownerId: ObjectId</text>
+    <text class="text" x="445" y="984">+roomId: ObjectId</text>
+    <text class="text" x="445" y="1006">+scanCount: number</text>
+  </g>
+
+  <g id="Room">
+    <rect class="box" x="765" y="790" width="255" height="225"/>
+    <text class="header" x="892" y="815" text-anchor="middle">Room</text>
+    <line class="mid" x1="765" y1="828" x2="1020" y2="828"/>
+    <text class="text" x="780" y="852">+_id: ObjectId</text>
+    <text class="text" x="780" y="874">+code: string</text>
+    <text class="text" x="780" y="896">+name: string</text>
+    <text class="text" x="780" y="918">+building: string</text>
+    <text class="text" x="780" y="940">+floor: string</text>
+    <text class="text" x="780" y="962">+latitude: number</text>
+    <text class="text" x="780" y="984">+longitude: number</text>
+    <text class="text" x="780" y="1006">+scanCount: number</text>
+  </g>
+
+  <g id="ScanLog">
+    <rect class="box" x="1100" y="790" width="255" height="225"/>
+    <text class="header" x="1227" y="815" text-anchor="middle">ScanLog</text>
+    <line class="mid" x1="1100" y1="828" x2="1355" y2="828"/>
+    <text class="text" x="1115" y="852">+_id: ObjectId</text>
+    <text class="text" x="1115" y="874">+qrData: string</text>
+    <text class="text" x="1115" y="896">+qrType: string</text>
+    <text class="text" x="1115" y="918">+scannedBy: ObjectId</text>
+    <text class="text" x="1115" y="940">+scannedAt: Date</text>
+    <text class="text" x="1115" y="962">+location: Object</text>
+    <text class="text" x="1115" y="984">+deviceInfo: Object</text>
+    <text class="text" x="1115" y="1006">+action: string</text>
+  </g>
+
+  <g id="MongoDB">
+    <rect class="box" x="1420" y="835" width="145" height="115"/>
+    <text class="header" x="1492" y="862" text-anchor="middle">MongoDB</text>
+    <line class="mid" x1="1420" y1="875" x2="1565" y2="875"/>
+    <text class="text" x="1438" y="900">+users</text>
+    <text class="text" x="1438" y="922">+assets</text>
+    <text class="text" x="1438" y="944">+rooms</text>
+  </g>
+
+  <!-- Top connections -->
+  <path class="line" d="M670 205 H285 V300"/>
+  <path class="line" d="M720 240 V300"/>
+  <path class="line" d="M800 240 V300"/>
+  <path class="line" d="M930 205 H1232 V300"/>
+
+  <!-- UI to auth/api -->
+  <path class="arrow" d="M400 365 H790"/>
+  <path class="arrow" d="M720 365 H790"/>
+  <path class="arrow" d="M1035 382 H1110"/>
+
+  <!-- UI/API to services -->
+  <path class="line" d="M285 450 V505 H212 V560"/>
+  <path class="line" d="M285 450 V505 H452 V545"/>
+  <path class="line" d="M285 450 V505 H697 V545"/>
+  <path class="line" d="M285 450 V505 H942 V545"/>
+  <path class="line" d="M595 450 V505 H452 V545"/>
+  <path class="line" d="M595 450 V505 H697 V545"/>
+  <path class="line" d="M595 450 V505 H942 V545"/>
+  <path class="line" d="M595 450 V505 H1187 V545"/>
+  <path class="line" d="M1232 450 V505 H1437 V560"/>
+
+  <!-- Services to entities -->
+  <path class="arrow" d="M212 685 V760 H235 V820"/>
+  <path class="arrow" d="M452 700 V790"/>
+  <path class="arrow" d="M697 700 V760 H892 V790"/>
+  <path class="arrow" d="M942 700 V760 H1227 V790"/>
+  <path class="arrow" d="M1187 700 V760 H235 V820"/>
+  <path class="arrow" d="M1437 685 V735 H557 V790"/>
+  <path class="arrow" d="M1437 685 V735 H892 V790"/>
+
+  <!-- Domain relationships -->
+  <path class="open" d="M430 880 H350"/>
+  <text class="label" x="365" y="870">0..* owns</text>
+  <path class="open" d="M685 910 H765"/>
+  <text class="label" x="708" y="900">0..* located in</text>
+  <path class="open" d="M1100 895 H1020"/>
+  <text class="label" x="1035" y="884">resolves</text>
+  <path class="open" d="M1100 935 H350"/>
+  <text class="label" x="715" y="925">scannedBy</text>
+  <path class="dash" d="M1227 1015 V1060 H557 V1015"/>
+  <text class="label" x="840" y="1080">metadata.entityId</text>
+
+  <!-- Persistence -->
+  <path class="line" d="M350 905 H1420"/>
+  <path class="line" d="M685 935 H1420"/>
+  <path class="line" d="M1020 890 H1420"/>
+  <path class="line" d="M1355 905 H1420"/>
+
+  <text class="caption" x="825" y="1135" text-anchor="middle">Fig 45 - SATS Class Diagram</text>
+</svg>

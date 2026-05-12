@@ -1,0 +1,224 @@
+{
+  "info": {
+    "name": "SAT API Collection",
+    "description": "Smart Asset Tracker backend endpoints.\nUsage notes:\n1. Create a Postman Environment (example: SAT-Local) with variables:\n   - api_root = http://localhost:4000/api (or your LAN IP)\n   - auth_token (leave blank; will be set by Login)\n   - user_role (blank)\n2. Run Auth > Login first. Test script stores token + role.\n3. All protected requests include Authorization automatically via variable.\n4. Register does NOT issue a token; login after register.\n5. Super admin only routes require role === SUPER_ADMIN.\n6. Body examples are minimal; adjust as needed.\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Tester\",\n  \"email\": \"jane+test@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"USER\"\n}"
+            },
+            "url": { "raw": "{{api_root}}/auth/register", "host": ["{{api_root}}"], "path": ["auth", "register"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "let data = {};",
+                    "try { data = pm.response.json(); } catch (e) { pm.test('Response JSON parse', () => { throw e }); }",
+                    "pm.test('Login should return token', () => { pm.expect(data.token, 'token').to.be.a('string'); });",
+                    "pm.environment.set('auth_token', data.token || '');",
+                    "pm.environment.set('user_role', (data.user && (data.user.role || data.user.role === '' ? data.user.role : data.user.role)) || '');",
+                    "pm.test('Auth token stored', () => { pm.expect(pm.environment.get('auth_token')).to.have.length.greaterThan(10); });"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\"\n}"
+              },
+              "url": { "raw": "{{api_root}}/auth/login", "host": ["{{api_root}}"], "path": ["auth", "login"] }
+            },
+            "response": []
+        }
+      ]
+    },
+    {
+      "name": "Assets",
+      "item": [
+        {
+          "name": "List Assets",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{auth_token}}" } ],
+            "url": { "raw": "{{api_root}}/assets", "host": ["{{api_root}}"], "path": ["assets"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Asset (SUPER_ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{auth_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetTag\": \"A100\",\n  \"name\": \"Demo Device\",\n  \"description\": \"Sample asset\",\n  \"assetType\": \"ELECTRONICS\",\n  \"status\": \"ACTIVE\",\n  \"ownerId\": \"<USER_ID>\",\n  \"roomId\": \"<ROOM_ID>\"\n}"
+            },
+            "url": { "raw": "{{api_root}}/assets", "host": ["{{api_root}}"], "path": ["assets"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Asset By Id",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{auth_token}}" } ],
+            "url": { "raw": "{{api_root}}/assets/{{asset_id}}", "host": ["{{api_root}}"], "path": ["assets", "{{asset_id}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Asset",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{auth_token}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"description\": \"Updated description\"\n}" },
+            "url": { "raw": "{{api_root}}/assets/{{asset_id}}", "host": ["{{api_root}}"], "path": ["assets", "{{asset_id}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Asset",
+          "request": {
+            "method": "DELETE",
+            "header": [ { "key": "Authorization", "value": "Bearer {{auth_token}}" } ],
+            "url": { "raw": "{{api_root}}/assets/{{asset_id}}", "host": ["{{api_root}}"], "path": ["assets", "{{asset_id}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Asset QR Code",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{auth_token}}" } ],
+            "url": { "raw": "{{api_root}}/assets/{{asset_id}}/qr-code", "host": ["{{api_root}}"], "path": ["assets", "{{asset_id}}", "qr-code"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Scan Asset",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{auth_token}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"location\": { \"lat\": 40.7, \"lng\": -74.0 },\n  \"deviceInfo\": { \"platform\": \"ios\" },\n  \"action\": \"VIEW\"\n}" },
+            "url": { "raw": "{{api_root}}/assets/{{asset_id}}/scan", "host": ["{{api_root}}"], "path": ["assets", "{{asset_id}}", "scan"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rooms",
+      "item": [
+        {
+          "name": "List Rooms",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{auth_token}}" } ], "url": { "raw": "{{api_root}}/rooms", "host": ["{{api_root}}"], "path": ["rooms"] } },
+          "response": []
+        },
+        {
+          "name": "Create Room (SUPER_ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{auth_token}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"R100\",\n  \"name\": \"Demo Room\",\n  \"building\": \"HQ\",\n  \"floor\": \"1\",\n  \"latitude\": 40.71,\n  \"longitude\": -74.00,\n  \"description\": \"Test room\",\n  \"roomType\": \"OFFICE\",\n  \"capacity\": 5\n}" },
+            "url": { "raw": "{{api_root}}/rooms", "host": ["{{api_root}}"], "path": ["rooms"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Room By Id",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{auth_token}}" } ], "url": { "raw": "{{api_root}}/rooms/{{room_id}}", "host": ["{{api_root}}"], "path": ["rooms", "{{room_id}}"] } },
+          "response": []
+        },
+        {
+          "name": "Update Room",
+          "request": { "method": "PUT", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{auth_token}}" } ], "body": { "mode": "raw", "raw": "{\n  \"description\": \"Updated room description\"\n}" }, "url": { "raw": "{{api_root}}/rooms/{{room_id}}", "host": ["{{api_root}}"], "path": ["rooms", "{{room_id}}"] } },
+          "response": []
+        },
+        {
+          "name": "Delete Room",
+          "request": { "method": "DELETE", "header": [ { "key": "Authorization", "value": "Bearer {{auth_token}}" } ], "url": { "raw": "{{api_root}}/rooms/{{room_id}}", "host": ["{{api_root}}"], "path": ["rooms", "{{room_id}}"] } },
+          "response": []
+        },
+        {
+          "name": "Room QR Code",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{auth_token}}" } ], "url": { "raw": "{{api_root}}/rooms/{{room_id}}/qr-code", "host": ["{{api_root}}"], "path": ["rooms", "{{room_id}}", "qr-code"] } },
+          "response": []
+        },
+        {
+          "name": "Scan Room",
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{auth_token}}" } ], "body": { "mode": "raw", "raw": "{\n  \"location\": { \"lat\": 40.71, \"lng\": -74.00 },\n  \"deviceInfo\": { \"platform\": \"android\" },\n  \"action\": \"VIEW\"\n}" }, "url": { "raw": "{{api_root}}/rooms/{{room_id}}/scan", "host": ["{{api_root}}"], "path": ["rooms", "{{room_id}}", "scan"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Resolve & Scans",
+      "item": [
+        {
+          "name": "Legacy Resolve (GET token)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{api_root}}/resolve?token={{legacy_token}}", "host": ["{{api_root}}"], "path": ["resolve"], "query": [ {"key": "token", "value": "{{legacy_token}}" } ] } },
+          "response": []
+        },
+        {
+          "name": "Resolve QR Data (POST)",
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{auth_token}}" } ], "body": { "mode": "raw", "raw": "{\n  \"qrData\": \"{\\\"type\\\":\\\"ASSET\\\",\\\"id\\\":\\\"<ASSET_ID>\\\"}\",\n  \"location\": { \"lat\": 40.7, \"lng\": -74.0 },\n  \"deviceInfo\": { \"platform\": \"test-client\" },\n  \"action\": \"VIEW\"\n}" }, "url": { "raw": "{{api_root}}/resolve", "host": ["{{api_root}}"], "path": ["resolve"] } },
+          "response": []
+        },
+        {
+          "name": "Scan History",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{auth_token}}" } ], "url": { "raw": "{{api_root}}/resolve/scan-history?page=1&limit=10", "host": ["{{api_root}}"], "path": ["resolve", "scan-history"], "query": [ {"key": "page", "value": "1"}, {"key": "limit", "value": "10"} ] } },
+          "response": []
+        },
+        {
+          "name": "Scan Stats",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{auth_token}}" } ], "url": { "raw": "{{api_root}}/resolve/scan-stats", "host": ["{{api_root}}"], "path": ["resolve", "scan-stats"] } },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Collection-level pre-request script (reserved for future).",
+          "// Could add dynamic timestamp headers or correlation IDs here."
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "api_root", "value": "http://localhost:4000/api" },
+    { "key": "auth_token", "value": "" },
+    { "key": "asset_id", "value": "" },
+    { "key": "room_id", "value": "" },
+    { "key": "legacy_token", "value": "" }
+  ]
+}

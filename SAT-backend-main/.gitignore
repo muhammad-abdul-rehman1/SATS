@@ -1,0 +1,9 @@
+
+# dependencies
+node_modules/
+
+# local env files — .env.example is committed as a template; real env files are not
+.env*.local
+.env
+.env.production
+.env.staging

@@ -1,0 +1,263 @@
+classDiagram
+direction LR
+
+class MobileApp {
+  <<React Native UI>>
+  +login()
+  +register()
+  +scanQRCode()
+  +manageAssets()
+  +manageRooms()
+}
+
+class WebDashboard {
+  <<Next.js UI>>
+  +viewDashboard()
+  +manageUsers()
+  +viewReports()
+  +viewScanHistory()
+}
+
+class AuthContext {
+  user: User
+  isAuthenticated: Boolean
+  +login(email, password)
+  +register(userData)
+  +logout()
+  +updateUser(userData)
+}
+
+class ApiClient {
+  baseURL: String
+  timeout: Number
+  +attachBearerToken()
+  +handleUnauthorized()
+}
+
+class AuthAPI {
+  +login(email, password)
+  +register(userData)
+  +getProfile()
+}
+
+class AssetsAPI {
+  +getAll(filters)
+  +getById(id)
+  +create(assetData)
+  +update(id, assetData)
+  +delete(id)
+  +generateQRCode(id)
+  +downloadQrPdf(id)
+}
+
+class RoomsAPI {
+  +getAll()
+  +getById(id)
+  +create(roomData)
+  +update(id, roomData)
+  +delete(id)
+  +getAssets(id)
+  +scan(id, scanData)
+}
+
+class QRAPI {
+  +resolve(qrData)
+  +getScanHistory()
+  +getScanStats()
+}
+
+class UsersAPI {
+  +getAll()
+  +getById(id)
+  +create(userData)
+  +update(id, userData)
+  +delete(id)
+  +updateRole(id, role)
+}
+
+class AuthMiddleware {
+  +isAuthenticated(req, res, next)
+  +isSuperAdmin(req, res, next)
+}
+
+class AuthRoutes {
+  +POST_register()
+  +POST_login()
+  +GET_profile()
+}
+
+class AssetRoutes {
+  +GET_assets()
+  +GET_assetById()
+  +POST_asset()
+  +PUT_asset()
+  +DELETE_asset()
+  +GET_assetQR()
+  +POST_assetScan()
+}
+
+class RoomRoutes {
+  +GET_rooms()
+  +GET_roomById()
+  +POST_room()
+  +PUT_room()
+  +DELETE_room()
+  +GET_roomAssets()
+  +POST_roomScan()
+}
+
+class ResolveRoutes {
+  +GET_legacyResolve()
+  +POST_resolveQR()
+  +GET_scanHistory()
+  +GET_scanStats()
+}
+
+class UserRoutes {
+  +GET_users()
+  +GET_userById()
+  +POST_user()
+  +PUT_user()
+  +DELETE_user()
+  +PATCH_userRole()
+}
+
+class QRCodeService {
+  +generateQR(payload, options)
+  +generateQRCodeForAsset(assetId, tag)
+  +generateQRCodeForRoom(roomId, code)
+}
+
+class User {
+  _id: ObjectId
+  email: String
+  password: String
+  name: String
+  role: USER | SUPER_ADMIN
+  createdAt: Date
+  updatedAt: Date
+}
+
+class Asset {
+  _id: ObjectId
+  assetTag: String
+  name: String
+  description: String
+  assetType: EQUIPMENT | FURNITURE | ELECTRONICS | VEHICLE | OTHER
+  status: ACTIVE | INACTIVE | MAINTENANCE | RETIRED
+  ownerId: ObjectId
+  roomId: ObjectId
+  qrCode: String
+  customFields: Object
+  lastScanned: Date
+  scanCount: Number
+}
+
+class Room {
+  _id: ObjectId
+  code: String
+  name: String
+  building: String
+  floor: String
+  latitude: Number
+  longitude: Number
+  description: String
+  qrCode: String
+  capacity: Number
+  roomType: OFFICE | MEETING_ROOM | STORAGE | LAB | OTHER
+  lastScanned: Date
+  scanCount: Number
+}
+
+class ScanLog {
+  _id: ObjectId
+  qrData: String
+  qrType: ASSET | ROOM | LOCATION
+  scannedBy: ObjectId
+  scannedAt: Date
+  action: VIEW | UPDATE | MOVE | MAINTENANCE
+  metadata: Object
+  userId: ObjectId
+  resolvedEntity: String
+  entityId: String
+}
+
+class QRStyle {
+  type: ASSET | ROOM | LOCATION
+  color: String
+  backgroundColor: String
+  size: Number
+}
+
+class GeoLocation {
+  latitude: Number
+  longitude: Number
+  accuracy: Number
+}
+
+class DeviceInfo {
+  platform: String
+  version: String
+  model: String
+}
+
+class MongoDB {
+  <<Database>>
+  users
+  assets
+  rooms
+  scanlogs
+}
+
+MobileApp --> AuthContext : uses
+MobileApp --> AssetsAPI : calls
+MobileApp --> RoomsAPI : calls
+MobileApp --> QRAPI : scans/resolves
+WebDashboard --> AuthContext : uses
+WebDashboard --> AssetsAPI : calls
+WebDashboard --> RoomsAPI : calls
+WebDashboard --> UsersAPI : admin calls
+WebDashboard --> QRAPI : reports/history
+AuthContext --> AuthAPI : authenticates through
+AuthAPI --> ApiClient : HTTP
+AssetsAPI --> ApiClient : HTTP
+RoomsAPI --> ApiClient : HTTP
+QRAPI --> ApiClient : HTTP
+UsersAPI --> ApiClient : HTTP
+ApiClient --> AuthRoutes : /api/auth
+ApiClient --> AssetRoutes : /api/assets
+ApiClient --> RoomRoutes : /api/rooms
+ApiClient --> ResolveRoutes : /api/resolve
+ApiClient --> UserRoutes : /api/users
+AuthRoutes --> AuthMiddleware : profile protected by
+AssetRoutes --> AuthMiddleware : protected by
+RoomRoutes --> AuthMiddleware : protected by
+ResolveRoutes --> AuthMiddleware : protected by
+UserRoutes --> AuthMiddleware : protected by
+AuthMiddleware --> User : loads req.user
+AuthRoutes --> User : creates/authenticates
+UserRoutes --> User : manages
+AssetRoutes --> Asset : CRUD
+AssetRoutes --> Room : filters/populates
+AssetRoutes --> ScanLog : logs scans
+AssetRoutes --> QRCodeService : generates QR/PDF
+RoomRoutes --> Room : CRUD
+RoomRoutes --> Asset : lists room assets
+RoomRoutes --> ScanLog : logs scans
+RoomRoutes --> QRCodeService : generates QR
+ResolveRoutes --> Asset : resolves asset QR
+ResolveRoutes --> Room : resolves room QR
+ResolveRoutes --> ScanLog : creates/history/stats
+Asset "0..*" --> "0..1" User : ownerId
+Asset "0..*" --> "0..1" Room : roomId
+User "1" --> "0..*" ScanLog : scannedBy/userId
+Asset "1" *-- "1" QRStyle : qrStyle
+Room "1" *-- "1" QRStyle : qrStyle
+ScanLog "0..*" --> "0..1" Asset : metadata.entityId
+ScanLog "0..*" --> "0..1" Room : metadata.entityId
+ScanLog "1" *-- "0..1" GeoLocation : location
+ScanLog "1" *-- "0..1" DeviceInfo : deviceInfo
+User --> MongoDB : persisted in
+Asset --> MongoDB : persisted in
+Room --> MongoDB : persisted in
+ScanLog --> MongoDB : persisted in
