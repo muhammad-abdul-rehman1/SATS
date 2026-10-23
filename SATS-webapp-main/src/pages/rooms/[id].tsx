@@ -47,8 +47,10 @@ export default function RoomDetails() {
         ]);
         
         setRoom(roomRes.data.data ? roomRes.data.data : roomRes.data);
-        setQrCode(qrRes.data.data?.qrCode || '');
-        setAssets(assetsRes.data.data || []);
+        const qr = (qrRes.data as any).data?.qrCode ?? (qrRes.data as any).qrCode ?? '';
+        setQrCode(qr);
+        const assetData = (assetsRes.data as any).data ?? assetsRes.data ?? [];
+        setAssets(Array.isArray(assetData) ? assetData : []);
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to load room details');
       } finally {

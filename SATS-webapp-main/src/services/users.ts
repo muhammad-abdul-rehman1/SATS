@@ -28,4 +28,22 @@ export const usersAPI = {
     const response = await api.delete<ApiResponse<null>>(`/users/${id}`);
     return response;
   },
+
+  toggleStatus: async (id: string, isActive: boolean) => {
+    const response = await api.patch<ApiResponse<User>>(`/users/${id}/status`, { isActive });
+    return response;
+  },
+
+  sendResetLink: async (id: string) => {
+    const response = await api.post<ApiResponse<any>>(`/users/${id}/reset-password`, { mode: 'email' });
+    return response;
+  },
+
+  resetPassword: async (id: string, newPassword: string) => {
+    const response = await api.post<ApiResponse<any>>(`/users/${id}/reset-password`, {
+      mode: 'manual',
+      newPassword,
+    });
+    return response;
+  },
 };

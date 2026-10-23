@@ -11,6 +11,7 @@ import {
   CircularProgress,
   Typography,
   Chip,
+  Checkbox,
 } from '@mui/material';
 
 interface Column {
@@ -27,6 +28,11 @@ interface DataTableProps {
   rows: any[];
   loading?: boolean;
   emptyMessage?: string;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onSelectAll?: (selected: boolean) => void;
+  onSelectRow?: (id: string, selected: boolean) => void;
+  getRowId?: (row: any) => string;
 }
 
 export const DataTable: React.FC<DataTableProps> = ({
@@ -34,6 +40,11 @@ export const DataTable: React.FC<DataTableProps> = ({
   rows,
   loading = false,
   emptyMessage = 'No data available',
+  selectable = false,
+  selectedIds = [],
+  onSelectAll,
+  onSelectRow,
+  getRowId = (row) => row._id || row.id,
 }) => {
   if (loading) {
     return (
@@ -51,11 +62,25 @@ export const DataTable: React.FC<DataTableProps> = ({
     );
   }
 
+  const allSelected = rows.length > 0 && rows.every((r) => selectedIds.includes(getRowId(r)));
+  const someSelected = rows.some((r) => selectedIds.includes(getRowId(r))) && !allSelected;
+
   return (
     <TableContainer component={Paper}>
       <Table stickyHeader aria-label="sticky table">
         <TableHead>
           <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+            {selectable && (
+              <TableCell padding="checkbox" sx={{ width: 48, backgroundColor: '#f5f5f5' }}>
+                <Checkbox
+                  size="small"
+                  indeterminate={someSelected}
+                  checked={allSelected}
+                  onChange={(e) => onSelectAll?.(e.target.checked)}
+                  inputProps={{ 'aria-label': 'select all rows' }}
+                />
+              </TableCell>
+            )}
             {columns.map((column) => (
               <TableCell
                 key={column.id}
@@ -69,18 +94,42 @@ export const DataTable: React.FC<DataTableProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row, index) => (
-            <TableRow key={index} hover>
-              {columns.map((column) => {
-                const value = row[column.id];
-                return (
-                  <TableCell key={`${index}-${column.id}`} align={column.align}>
-                    {column.render ? column.render(row) : column.format ? column.format(value) : value}
+          {rows.map((row, index) => {
+            const rowId = getRowId(row);
+            const isSelected = selectedIds.includes(rowId);
+            return (
+              <TableRow
+                key={rowId || index}
+                hover
+                selected={isSelected}
+                sx={{
+                  backgroundColor: isSelected ? 'rgba(0, 102, 255, 0.05)' : undefined,
+                  '&.Mui-selected, &.Mui-selected:hover': {
+                    backgroundColor: 'rgba(0, 102, 255, 0.09) !important',
+                  },
+                }}
+              >
+                {selectable && (
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      size="small"
+                      checked={isSelected}
+                      onChange={(e) => onSelectRow?.(rowId, e.target.checked)}
+                      inputProps={{ 'aria-label': `select row ${index}` }}
+                    />
                   </TableCell>
-                );
-              })}
-            </TableRow>
-          ))}
+                )}
+                {columns.map((column) => {
+                  const value = row[column.id];
+                  return (
+                    <TableCell key={`${index}-${column.id}`} align={column.align}>
+                      {column.render ? column.render(row) : column.format ? column.format(value) : value}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </TableContainer>

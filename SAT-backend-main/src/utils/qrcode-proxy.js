@@ -32,7 +32,7 @@ export const generateQR = async (data, options = {}) => {
   }
 };
 
-export const generateQRCodeForAsset = async (assetId, assetTag) => {
+export const generateQRCodeForAsset = async (assetId, assetTag, qrStyle = {}) => {
   const qrData = JSON.stringify({
     type: 'ASSET',
     id: assetId,
@@ -41,13 +41,13 @@ export const generateQRCodeForAsset = async (assetId, assetTag) => {
   });
   
   return await generateQR(qrData, {
-    size: 200,
-    color: '#000000',
-    backgroundColor: '#FFFFFF'
+    size: qrStyle?.size || 200,
+    color: qrStyle?.color || '#000000',
+    backgroundColor: qrStyle?.backgroundColor || '#FFFFFF'
   });
 };
 
-export const generateQRCodeForRoom = async (roomId, roomCode) => {
+export const generateQRCodeForRoom = async (roomId, roomCode, qrStyle = {}) => {
   const qrData = JSON.stringify({
     type: 'ROOM',
     id: roomId,
@@ -56,13 +56,13 @@ export const generateQRCodeForRoom = async (roomId, roomCode) => {
   });
   
   return await generateQR(qrData, {
-    size: 200,
-    color: '#0066CC',
-    backgroundColor: '#FFFFFF'
+    size: qrStyle?.size || 200,
+    color: qrStyle?.color || '#0066CC',
+    backgroundColor: qrStyle?.backgroundColor || '#FFFFFF'
   });
 };
 
-export const generateQRCodeForLocation = async (locationId, locationName) => {
+export const generateQRCodeForLocation = async (locationId, locationName, qrStyle = {}) => {
   const qrData = JSON.stringify({
     type: 'LOCATION',
     id: locationId,
@@ -71,8 +71,8 @@ export const generateQRCodeForLocation = async (locationId, locationName) => {
   });
   
   return await generateQR(qrData, {
-    size: 200,
-    color: '#00AA00',
-    backgroundColor: '#FFFFFF'
+    size: qrStyle?.size || 200,
+    color: qrStyle?.color || '#00AA00',
+    backgroundColor: qrStyle?.backgroundColor || '#FFFFFF'
   });
 };

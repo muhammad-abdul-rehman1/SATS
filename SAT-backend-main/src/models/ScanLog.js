@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const scanLogSchema = new mongoose.Schema({
   qrData: { type: String, required: true },
   qrType: { type: String, enum: ['ASSET', 'ROOM', 'LOCATION'], required: true },
+  scanMethod: { type: String, enum: ['QR', 'NFC'], default: 'QR' },
   scannedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   scannedAt: { type: Date, default: Date.now },
   location: {

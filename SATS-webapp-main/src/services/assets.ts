@@ -40,4 +40,41 @@ export const assetsAPI = {
     });
     return response;
   },
+
+  bulkUpdate: async (payload: { assetIds: string[]; updates: any }) => {
+    const response = await api.post<ApiResponse<{ message: string; modifiedCount: number }>>('/assets/bulk-update', payload);
+    return response;
+  },
+
+  bulkDelete: async (assetIds: string[]) => {
+    const response = await api.post<ApiResponse<{ message: string; deletedCount: number }>>('/assets/bulk-delete', { assetIds });
+    return response;
+  },
+
+  getLogs: async (id: string) => {
+    const response = await api.get<ApiResponse<any[]>>(`/assets/${id}/logs`);
+    return response;
+  },
+
+  getMovementHistory: async (id: string, params?: { startDate?: string; endDate?: string; page?: number; limit?: number }) => {
+    const response = await api.get<ApiResponse<{ asset: any; movements: any[]; total: number; pagination: any }>>(`/assets/${id}/movement-history`, {
+      params,
+    });
+    return response;
+  },
+
+  exportMovementHistory: async (id: string, format: 'pdf' | 'csv' = 'pdf', params?: { startDate?: string; endDate?: string }) => {
+    const response = await api.get(`/assets/${id}/movement-history/export`, {
+      params: { ...params, format },
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  getAllMovementHistory: async (params?: { startDate?: string; endDate?: string; search?: string; assetTag?: string; page?: number; limit?: number }) => {
+    const response = await api.get<ApiResponse<{ movements: any[]; total: number; pagination: any }>>('/assets/movement-history', {
+      params,
+    });
+    return response;
+  },
 };

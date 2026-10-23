@@ -129,14 +129,20 @@ router.get('/:id/assets', isAuthenticated, async (req, res) => {
   }
 });
 
-// Generate QR code for room
+// Generate QR code for room (FR14-01, FR14-02)
 router.get('/:id/qr-code', isAuthenticated, async (req, res) => {
   try {
     const room = await Room.findById(req.params.id);
     if (!room) return res.status(404).json({ message: 'Room not found' });
     
-    const qrCodeDataURL = await generateQRCodeForRoom(room._id, room.code);
-    res.json({ qrCode: qrCodeDataURL });
+    const qrStyle = {
+      color: req.query.color || room.qrStyle?.color || '#0066CC',
+      backgroundColor: req.query.backgroundColor || room.qrStyle?.backgroundColor || '#FFFFFF',
+      size: parseInt(req.query.size) || room.qrStyle?.size || 200
+    };
+
+    const qrCodeDataURL = await generateQRCodeForRoom(room._id, room.code, qrStyle);
+    res.json({ qrCode: qrCodeDataURL, qrStyle });
   } catch (error) {
     res.status(500).json({ message: 'Error generating QR code', error: error.message });
   }

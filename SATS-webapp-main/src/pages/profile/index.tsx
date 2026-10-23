@@ -4,16 +4,18 @@ import {
   Box, Button, Card, CardContent, Container, Typography,
   CircularProgress, Grid, Alert, Divider, Avatar, TextField,
   Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Snackbar, LinearProgress,
+  Snackbar, LinearProgress, Switch, FormControlLabel,
 } from '@mui/material';
 import {
   Person as PersonIcon, Lock as LockIcon, Inventory as AssetIcon,
   History as HistoryIcon, QrCode as QrIcon, MeetingRoom as RoomIcon,
+  Shield as ShieldIcon, Security as SecurityIcon, Public as PublicIcon,
 } from '@mui/icons-material';
 import { Layout } from '@/components/Layout/MainLayout';
 import { useProtectedRoute } from '@/hooks/useRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersAPI } from '@/services/users';
+import { authAPI } from '@/services/auth';
 import { assetsAPI } from '@/services/assets';
 import { scanHistoryAPI } from '@/services/scanHistory';
 import { formatDateTime, formatLabel } from '@/utils/formatting';
@@ -28,12 +30,15 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
 export default function ProfilePage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useProtectedRoute();
-  const { user, login } = useAuth();
+  const { user, refreshUser } = useAuth();
 
-  const [myAssets, setMyAssets]     = useState<any[]>([]);
-  const [scanLogs, setScanLogs]     = useState<any[]>([]);
-  const [scanStats, setScanStats]   = useState<any>(null);
-  const [loading, setLoading]       = useState(true);
+  const [myAssets, setMyAssets]         = useState<any[]>([]);
+  const [scanLogs, setScanLogs]         = useState<any[]>([]);
+  const [scanStats, setScanStats]       = useState<any>(null);
+  const [loginHistory, setLoginHistory] = useState<any[]>([]);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [toggling2FA, setToggling2FA]   = useState(false);
+  const [loading, setLoading]           = useState(true);
 
   // Edit profile form
   const [editName, setEditName]       = useState('');
@@ -54,10 +59,11 @@ export default function ProfilePage() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [assetsRes, scanRes, statsRes] = await Promise.all([
+      const [assetsRes, scanRes, statsRes, historyRes] = await Promise.all([
         assetsAPI.getAll({ limit: 100 }),
         scanHistoryAPI.getScanHistory(1, 10),
         scanHistoryAPI.getScanStats(),
+        authAPI.getMyLoginHistory().catch(() => ({ data: { logs: [] } })),
       ]);
       const all = (assetsRes.data as any).data ?? (assetsRes.data as any) ?? [];
       const uid = (user as any)?._id || (user as any)?.id;
@@ -67,6 +73,7 @@ export default function ProfilePage() {
       }) : []);
       setScanLogs((scanRes.data as any).scanLogs ?? []);
       setScanStats((statsRes.data as any));
+      setLoginHistory((historyRes.data as any)?.logs ?? []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -78,6 +85,7 @@ export default function ProfilePage() {
     if (!isAuthenticated || authLoading || !user) return;
     setEditName(user.name || '');
     setEditEmail(user.email || '');
+    setTwoFactorEnabled(Boolean(user.twoFactorEnabled));
     loadData();
   }, [isAuthenticated, authLoading, user, loadData]);
 
@@ -114,6 +122,21 @@ export default function ProfilePage() {
       setPwErr(err.response?.data?.message || 'Failed to change password');
     } finally {
       setSavingPw(false);
+    }
+  };
+
+  const handleToggle2FA = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextState = e.target.checked;
+    try {
+      setToggling2FA(true);
+      const res = await authAPI.toggle2FA(nextState);
+      setTwoFactorEnabled(res.data.twoFactorEnabled);
+      if (refreshUser) await refreshUser();
+      setSnackbar(res.data.message || `2FA ${nextState ? 'enabled' : 'disabled'}`);
+    } catch (err: any) {
+      setSnackbar(err.response?.data?.message || 'Failed to update 2FA setting');
+    } finally {
+      setToggling2FA(false);
     }
   };
 
@@ -235,6 +258,51 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
 
+              {/* Security & 2FA Card (FR02-06) */}
+              <Card elevation={0} sx={{ border: '1px solid rgba(0,102,255,0.1)', borderRadius: '16px', mb: 3 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <ShieldIcon sx={{ color: '#0066FF' }} />
+                      <Typography variant="h6" sx={{ fontWeight: 700 }}>Two-Factor Authentication (2FA)</Typography>
+                    </Box>
+                    <Chip
+                      label={twoFactorEnabled ? '2FA Enabled' : '2FA Disabled'}
+                      color={twoFactorEnabled ? 'success' : 'default'}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontWeight: 700 }}
+                    />
+                  </Box>
+                  <Divider sx={{ mb: 2 }} />
+                  <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                    Protect your administrator account with two-factor authentication. When enabled, a 6-digit one-time code will be dispatched to your registered email address every time you log in.
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, bgcolor: 'rgba(0,102,255,0.04)', borderRadius: '12px', border: '1px solid rgba(0,102,255,0.1)' }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#001A4D' }}>
+                        Require 2FA Code on Login
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        Delivered via Gmail SMTP to {user?.email}
+                      </Typography>
+                    </Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={twoFactorEnabled}
+                          onChange={handleToggle2FA}
+                          disabled={toggling2FA}
+                          color="primary"
+                        />
+                      }
+                      label={toggling2FA ? 'Updating...' : twoFactorEnabled ? 'Active' : 'Off'}
+                      sx={{ m: 0 }}
+                    />
+                  </Box>
+                </CardContent>
+              </Card>
+
               {/* My Assigned Assets */}
               <Card elevation={0} sx={{ border: '1px solid rgba(0,102,255,0.1)', borderRadius: '16px', mb: 3 }}>
                 <CardContent sx={{ p: 3 }}>
@@ -310,6 +378,75 @@ export default function ProfilePage() {
                         </Box>
                       ))}
                     </Box>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Security & Login Activity (FR02-05) */}
+              <Card elevation={0} sx={{ border: '1px solid rgba(0,102,255,0.1)', borderRadius: '16px', mt: 3 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <SecurityIcon sx={{ color: '#0066FF' }} />
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>Security & Login Activity</Typography>
+                  </Box>
+                  <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mb: 2 }}>
+                    Monitored login timestamps, IP addresses, and events recorded for security auditing.
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                  {loginHistory.length === 0 ? (
+                    <Box sx={{ textAlign: 'center', py: 3 }}>
+                      <SecurityIcon sx={{ fontSize: 40, color: '#ddd', mb: 1 }} />
+                      <Typography color="textSecondary" variant="body2">No security audit logs recorded yet.</Typography>
+                    </Box>
+                  ) : (
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow sx={{ backgroundColor: 'rgba(0,102,255,0.04)' }}>
+                            <TableCell sx={{ fontWeight: 700 }}>Event</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>IP Address</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Date & Time</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {loginHistory.map((log: any, i: number) => {
+                            const isSuccess = log.status === 'SUCCESS' || log.action === 'LOGIN_SUCCESS' || log.action === '2FA_SUCCESS';
+                            return (
+                              <TableRow key={log._id || i} hover>
+                                <TableCell>
+                                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem' }}>
+                                    {formatLabel(log.action || 'LOGIN')}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <PublicIcon sx={{ fontSize: '0.9rem', color: '#64748b' }} />
+                                    <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+                                      {log.ipAddress || '127.0.0.1'}
+                                    </Typography>
+                                  </Box>
+                                </TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={log.status || (isSuccess ? 'SUCCESS' : 'FAILED')}
+                                    size="small"
+                                    color={isSuccess ? 'success' : 'error'}
+                                    variant="outlined"
+                                    sx={{ fontSize: '0.7rem', height: 20, fontWeight: 700 }}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="caption" color="textSecondary">
+                                    {formatDateTime(log.createdAt)}
+                                  </Typography>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   )}
                 </CardContent>
               </Card>

@@ -25,6 +25,10 @@ import {
   Grid,
   InputBase,
   Paper,
+  Badge,
+  Popover,
+  Chip,
+  Stack,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -42,10 +46,18 @@ import {
   Person as PersonIcon,
   BarChart as BarChartIcon,
   Search as SearchIcon,
+  Build as BuildIcon,
+  Notifications as NotificationsIcon,
+  CheckCircleOutline as CheckCircleOutlineIcon,
+  WarningAmber as WarningIcon,
+  QrCode as QrCodeIcon,
+  ReportProblem as ReportProblemIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
+import { notificationsAPI } from '@/services/notifications';
+import { SystemNotification } from '@/types';
 
 const DRAWER_WIDTH = 240;
 
@@ -59,6 +71,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -82,20 +95,62 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
+  const handleLogoutClick = () => {
+    handleMenuClose();
+    setLogoutDialogOpen(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setLogoutDialogOpen(false);
+    await logout();
+    router.push('/login?loggedOut=true');
+  };
+
+  // System Notifications State
+  const [notifAnchorEl, setNotifAnchorEl] = useState<null | HTMLElement>(null);
+  const [recentAlerts, setRecentAlerts] = useState<SystemNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  const loadNotifications = async () => {
+    try {
+      const res = await notificationsAPI.getActive();
+      setRecentAlerts(res.data?.data || []);
+      setUnreadCount(res.data?.unreadCount || 0);
+    } catch (err) {
+      // silent
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      loadNotifications();
+      const interval = setInterval(loadNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationsAPI.markAllRead();
+      loadNotifications();
+    } catch (err) {
+      // silent
+    }
   };
 
   const menuItems = [
-    { label: 'Dashboard',    icon: <DashboardIcon />,    href: '/' },
-    { label: 'Assets',       icon: <AssignmentIcon />,   href: '/assets' },
-    { label: 'Rooms',        icon: <RoomIcon />,         href: '/rooms' },
-    { label: 'Rooms Map',    icon: <MapIcon />,          href: '/map/rooms' },
-    { label: 'Scan History', icon: <HistoryIcon />,      href: '/scan-history' },
-    { label: 'Reports',      icon: <BarChartIcon />,     href: '/reports' },
-    { label: 'Users',        icon: <PeopleIcon />,       href: '/users' },
-    { label: 'My Profile',   icon: <PersonIcon />,       href: '/profile' },
+    { label: 'Dashboard',     icon: <DashboardIcon />,     href: '/' },
+    { label: 'Assets',        icon: <AssignmentIcon />,    href: '/assets' },
+    { label: 'Rooms',         icon: <RoomIcon />,          href: '/rooms' },
+    { label: 'Rooms Map',     icon: <MapIcon />,           href: '/map/rooms' },
+    { label: 'QR Management', icon: <QrCodeIcon />,        href: '/qr-management' },
+    { label: 'Maintenance',   icon: <BuildIcon />,         href: '/maintenance' },
+    { label: 'Reported Issues', icon: <ReportProblemIcon />, href: '/my-issues' },
+    { label: 'Notifications', icon: <NotificationsIcon />, href: '/notifications' },
+    { label: 'Scan History',  icon: <HistoryIcon />,       href: '/scan-history' },
+    { label: 'Reports',       icon: <BarChartIcon />,      href: '/reports' },
+    { label: 'Users',         icon: <PeopleIcon />,        href: '/users' },
+    { label: 'My Profile',    icon: <PersonIcon />,        href: '/profile' },
   ];
 
   const drawer = (
@@ -314,6 +369,116 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             )}
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* Notifications Bell */}
+            <Tooltip title="Notifications">
+              <IconButton
+                color="inherit"
+                onClick={(e) => setNotifAnchorEl(e.currentTarget)}
+                sx={{
+                  color: '#00D9FF',
+                  backgroundColor: 'rgba(255,255,255,0.06)',
+                  '&:hover': { backgroundColor: 'rgba(0,217,255,0.15)' },
+                  width: 40,
+                  height: 40,
+                }}
+              >
+                <Badge badgeContent={unreadCount} color="error" max={99}>
+                  <NotificationsIcon />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+
+            {/* Notification Popover */}
+            <Popover
+              open={Boolean(notifAnchorEl)}
+              anchorEl={notifAnchorEl}
+              onClose={() => setNotifAnchorEl(null)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              PaperProps={{
+                sx: {
+                  width: 360,
+                  maxHeight: 460,
+                  borderRadius: '16px',
+                  boxShadow: '0 12px 40px rgba(0, 26, 77, 0.18)',
+                  border: '1px solid rgba(0, 102, 255, 0.1)',
+                  p: 0,
+                  overflow: 'hidden',
+                },
+              }}
+            >
+              <Box sx={{ p: 2, background: 'linear-gradient(135deg, #001A4D 0%, #002B80 100%)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <NotificationsIcon sx={{ color: '#00D9FF', fontSize: 20 }} />
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Notifications</Typography>
+                  {unreadCount > 0 && (
+                    <Chip label={`${unreadCount} New`} size="small" sx={{ bgcolor: '#EF4444', color: 'white', height: 20, fontSize: '0.68rem', fontWeight: 700 }} />
+                  )}
+                </Box>
+                {unreadCount > 0 && (
+                  <Button size="small" onClick={handleMarkAllRead} sx={{ color: '#00D9FF', textTransform: 'none', fontSize: '0.75rem', p: 0 }}>
+                    Mark all read
+                  </Button>
+                )}
+              </Box>
+
+              <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
+                {recentAlerts.length === 0 ? (
+                  <Box sx={{ p: 4, textAlign: 'center' }}>
+                    <CheckCircleOutlineIcon sx={{ fontSize: 36, color: '#10B981', mb: 1 }} />
+                    <Typography variant="body2" color="textSecondary">All caught up! No active alerts.</Typography>
+                  </Box>
+                ) : (
+                  recentAlerts.slice(0, 5).map((alert) => (
+                    <Box
+                      key={alert._id}
+                      onClick={() => {
+                        setNotifAnchorEl(null);
+                        router.push('/notifications');
+                      }}
+                      sx={{
+                        p: 1.8,
+                        borderBottom: '1px solid #F1F5F9',
+                        cursor: 'pointer',
+                        bgcolor: alert.isRead ? 'transparent' : 'rgba(0, 102, 255, 0.04)',
+                        '&:hover': { bgcolor: 'rgba(0, 102, 255, 0.08)' },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: alert.priority === 'CRITICAL' ? '#DC2626' : alert.priority === 'HIGH' ? '#EA580C' : '#0284C7' }}>
+                          {alert.priority} • {alert.category}
+                        </Typography>
+                        <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.7rem' }}>
+                          {new Date(alert.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Typography>
+                      </Box>
+                      <Typography variant="body2" sx={{ fontWeight: alert.isRead ? 500 : 700, color: '#1E293B', mb: 0.3 }}>
+                        {alert.title}
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {alert.message}
+                      </Typography>
+                    </Box>
+                  ))
+                )}
+              </Box>
+
+              <Divider />
+              <Box sx={{ p: 1.2, textAlign: 'center', bgcolor: '#F8FAFC' }}>
+                <Button
+                  fullWidth
+                  size="small"
+                  onClick={() => {
+                    setNotifAnchorEl(null);
+                    router.push('/notifications');
+                  }}
+                  sx={{ textTransform: 'none', fontWeight: 700, color: '#0066FF' }}
+                >
+                  View All Notifications & Settings
+                </Button>
+              </Box>
+            </Popover>
+
             <Tooltip title="User Profile">
               <Avatar
                 sx={{ 
@@ -432,7 +597,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </MenuItem>
 
                 <MenuItem 
-                  onClick={handleLogout}
+                  onClick={handleLogoutClick}
                   sx={{
                     borderRadius: '8px',
                     px: 2,
@@ -587,6 +752,60 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Logout Confirmation Dialog (FR06-04) */}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={() => setLogoutDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            p: 1,
+            maxWidth: 420,
+            width: '100%',
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#001A4D', pb: 1 }}>
+          Confirm Logout
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: '#555', lineHeight: 1.6 }}>
+            Are you sure you want to log out of your account? You will be redirected to the login page.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setLogoutDialogOpen(false)}
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              color: '#666',
+              borderColor: '#ccc',
+              '&:hover': { borderColor: '#999' }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmLogout}
+            color="error"
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              background: 'linear-gradient(135deg, #FF4D7D 0%, #E0245E 100%)',
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(255, 77, 125, 0.3)',
+            }}
+          >
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
+
+export default Layout;

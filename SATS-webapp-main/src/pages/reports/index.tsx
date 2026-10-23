@@ -22,8 +22,12 @@ import { formatDateTime, formatLabel } from '@/utils/formatting';
 
 const COLORS = ['#0066FF','#00D9FF','#7C3AED','#059669','#F59E0B','#EF4444','#EC4899','#14B8A6'];
 
-const getRelationName = (relation?: string | { name?: string }) =>
-  typeof relation === 'object' ? relation.name || '' : '';
+const getRelationName = (relation?: string | { name?: string } | null) => {
+  if (!relation) return '';
+  if (typeof relation === 'object') return relation.name || '';
+  return typeof relation === 'string' ? relation : '';
+};
+
 
 export default function Reports() {
   const { isAuthenticated, isLoading: authLoading } = useProtectedRoute();
@@ -104,7 +108,7 @@ export default function Reports() {
         assets.filter((a: any) => (a.roomId?._id ?? a.roomId) === r._id).length,
       ]);
     }
-    const csv = [headers.join(','), ...rows.map(r => r.map((v: any) => `"${String(v).replace(/"/g,'""')}"`).join(','))].join('\n');
+    const csv = [headers.join(','), ...rows.map(r => r.map((v: any) => `"${String(v ?? '').replace(/"/g,'""')}"`).join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

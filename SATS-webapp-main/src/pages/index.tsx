@@ -15,6 +15,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Alert,
 } from '@mui/material';
 import {
   Assessment as AssessmentIcon,
@@ -149,6 +150,26 @@ export default function Dashboard() {
             Smart Asset Tracking Overview
           </Typography>
         </Box>
+
+        {/* Status Monitoring & Maintenance Alerts (FR09-04, FR09-05) */}
+        {!loading && assets.some((a: any) => a.status === 'MAINTENANCE' || a.status === 'RETIRED') && (
+          <Alert
+            severity="warning"
+            sx={{ mb: 3, borderRadius: '12px', border: '1px solid #ffe0b2', display: 'flex', alignItems: 'center' }}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => router.push('/assets')}
+                sx={{ fontWeight: 700, textTransform: 'none', border: '1px solid rgba(0,0,0,0.15)', px: 1.5 }}
+              >
+                Inspect Assets
+              </Button>
+            }
+          >
+            <strong>Status Alert:</strong> {assets.filter((a: any) => a.status === 'MAINTENANCE').length} asset(s) under maintenance, and {assets.filter((a: any) => a.status === 'RETIRED').length} retired asset(s) require administrative review.
+          </Alert>
+        )}
 
         {/* Stats Cards */}
         {loading ? (

@@ -121,3 +121,7 @@ dist
 
 # Mac OS DS_Store
 .DS_Store
+
+# Root-level project archives and large documents
+/*.zip
+/Fyp documentation.pdf

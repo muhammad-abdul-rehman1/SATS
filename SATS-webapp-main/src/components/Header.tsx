@@ -10,6 +10,10 @@ import {
   MenuItem,
   Avatar,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +32,7 @@ export const Header: React.FC<HeaderProps> = ({ showLogo = true, hideUserMenu = 
   const { user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileMenuAnchorEl, setMobileMenuAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -45,10 +50,15 @@ export const Header: React.FC<HeaderProps> = ({ showLogo = true, hideUserMenu = 
     setMobileMenuAnchorEl(null);
   };
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
     handleUserMenuClose();
+    setLogoutDialogOpen(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setLogoutDialogOpen(false);
     await logout();
-    router.push('/login');
+    router.push('/login?loggedOut=true');
   };
 
   const navItems = [
@@ -59,7 +69,8 @@ export const Header: React.FC<HeaderProps> = ({ showLogo = true, hideUserMenu = 
   ];
 
   return (
-    <AppBar
+    <>
+      <AppBar
       position="sticky"
       elevation={0}
       sx={{
@@ -236,7 +247,7 @@ export const Header: React.FC<HeaderProps> = ({ showLogo = true, hideUserMenu = 
                 </MenuItem>
                 <Divider />
                 <MenuItem
-                  onClick={handleLogout}
+                  onClick={handleLogoutClick}
                   sx={{
                     color: '#FF4D7D',
                     '&:hover': {
@@ -297,7 +308,60 @@ export const Header: React.FC<HeaderProps> = ({ showLogo = true, hideUserMenu = 
           </Menu>
         </Toolbar>
       </Container>
-    </AppBar>
+      </AppBar>
+
+      {/* Logout Confirmation Dialog (FR06-04) */}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={() => setLogoutDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            p: 1,
+            maxWidth: 420,
+            width: '100%',
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#001A4D', pb: 1 }}>
+          Confirm Logout
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: '#555', lineHeight: 1.6 }}>
+            Are you sure you want to log out of your account? You will be redirected to the login page.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setLogoutDialogOpen(false)}
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              color: '#666',
+              borderColor: '#ccc',
+              '&:hover': { borderColor: '#999' }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmLogout}
+            color="error"
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              background: 'linear-gradient(135deg, #FF4D7D 0%, #E0245E 100%)',
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(255, 77, 125, 0.3)',
+            }}
+          >
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };
 

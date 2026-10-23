@@ -10,6 +10,7 @@ const roomSchema = new mongoose.Schema({
   description: String,
   // Make qrCode sparse so multiple new rooms without an assigned QR don't violate unique index
   qrCode: { type: String, unique: true, sparse: true },
+  nfcTagId: { type: String, sparse: true },
   qrStyle: {
     type: { type: String, enum: ['ASSET', 'ROOM', 'LOCATION'], default: 'ROOM' },
     color: { type: String, default: '#0066CC' },
