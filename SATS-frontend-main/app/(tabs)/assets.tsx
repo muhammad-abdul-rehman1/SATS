@@ -1,0 +1,447 @@
+import { Link, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, View, TouchableOpacity, RefreshControl, Alert, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system/legacy';
+
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { assetsAPI } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
+import React from 'react';
+
+interface Asset {
+  _id: string;
+  assetTag: string;
+  name: string;
+  description?: string;
+  assetType: 'EQUIPMENT' | 'FURNITURE' | 'ELECTRONICS' | 'VEHICLE' | 'OTHER';
+  status: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE' | 'RETIRED';
+  scanCount: number;
+  lastScanned?: string;
+  roomId?: {
+    _id: string;
+    name: string;
+    code: string;
+  };
+}
+
+export default function AssetsScreen() {
+  const router = useRouter();
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { user, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadAssets();
+    }
+  }, [isAuthenticated]);
+
+  const loadAssets = async () => {
+    try {
+      setLoading(true);
+      const data = await assetsAPI.getAll();
+      setAssets(data);
+    } catch (err) {
+      setError('Failed to load assets');
+      console.error('Error loading assets:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadAssets();
+    setRefreshing(false);
+  };
+
+  const handleCreateAsset = () => {
+    if (user?.role === 'SUPER_ADMIN') {
+      router.push('/create-asset');
+    } else {
+      Alert.alert('Access Denied', 'Only super admins can create assets');
+    }
+  };
+
+  const getAssetTypeIcon = (type: Asset['assetType']) => {
+    switch (type) {
+      case 'EQUIPMENT': return 'construct-outline';
+      case 'FURNITURE': return 'desktop-outline';
+      case 'ELECTRONICS': return 'laptop-outline';
+      case 'VEHICLE': return 'car-sport-outline';
+      default: return 'cube-outline';
+    }
+  };
+
+  const getStatusColor = (status: Asset['status']) => {
+    switch (status) {
+      case 'ACTIVE': return '#4CAF50';
+      case 'INACTIVE': return '#9E9E9E';
+      case 'MAINTENANCE': return '#FFC107';
+      case 'RETIRED': return '#F44336';
+      default: return '#9E9E9E';
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <View style={styles.centerContainer}>
+        <ThemedText style={styles.loginPrompt}>Please log in to view assets</ThemedText>
+        <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/login')}>
+          <ThemedText style={styles.loginButtonText}>Login</ThemedText>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <ThemedText style={styles.loadingText}>Loading assets...</ThemedText>
+      </View>
+    );
+  }
+
+  const renderAsset = ({ item }: { item: Asset }) => (
+    <TouchableOpacity onPress={() => router.push(`/asset-detail/${item._id}`)}>
+      <ThemedView style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={styles.assetInfo}>
+            <ThemedText style={styles.assetName}>{item.name}</ThemedText>
+            <ThemedText style={styles.assetTag}>#{item.assetTag}</ThemedText>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+            <ThemedText style={styles.statusText}>{item.status.replace('_', ' ')}</ThemedText>
+          </View>
+        </View>
+
+        {item.description && (
+          <ThemedText style={styles.description} numberOfLines={2}>
+            {item.description}
+          </ThemedText>
+        )}
+
+        <View style={styles.details}>
+          <View style={styles.detailRow}>
+            <Ionicons name={getAssetTypeIcon(item.assetType)} size={16} color="#666" />
+            <ThemedText style={styles.detailText}>{item.assetType}</ThemedText>
+          </View>
+
+          {item.roomId && (
+            <View style={styles.detailRow}>
+              <Ionicons name="business-outline" size={16} color="#666" />
+              <ThemedText style={styles.detailText}>
+                {item.roomId.name} ({item.roomId.code})
+              </ThemedText>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.assetFooter}>
+          <View style={styles.scanInfo}>
+            <Ionicons name="qr-code-outline" size={14} color="#666" />
+            <ThemedText style={styles.scanText}>{item.scanCount || 0} scans</ThemedText>
+          </View>
+          {item.lastScanned && (
+            <ThemedText style={styles.lastScanned}>
+              Last: {new Date(item.lastScanned).toLocaleDateString()}
+            </ThemedText>
+          )}
+        </View>
+      </ThemedView>
+    </TouchableOpacity>
+  );
+
+  return (
+    <ThemedView style={styles.container}>
+      <View style={styles.header}>
+        <ThemedText style={styles.title}>Assets</ThemedText>
+        <View style={styles.headerButtons}>
+          {assets.length > 0 && user?.role === 'SUPER_ADMIN' && (
+            <TouchableOpacity 
+              style={[styles.downloadButton, downloading && styles.downloadButtonDisabled]} 
+              disabled={downloading}
+              onPress={async () => {
+                try {
+                  setDownloading(true);
+                  const res = await assetsAPI.downloadAllQrPdf(512);
+                  const uri = res?.uri;
+                  const filename = res?.filename || 'all-assets-qr.pdf';
+                  
+                  if (!uri || typeof uri !== 'string' || uri.length < 5) {
+                    throw new Error('Invalid URI received from API');
+                  }
+
+                  if (Platform.OS === 'android') {
+                    const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+                    if (!permissions.granted) {
+                      Alert.alert('Permission required', 'Please grant access to save the file.');
+                      return;
+                    }
+                    const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+                      permissions.directoryUri,
+                      filename,
+                      'application/pdf'
+                    );
+                    const base64 = uri.split(',')[1];
+                    if (!base64) throw new Error('Invalid PDF data: base64 string is empty.');
+                    await FileSystem.writeAsStringAsync(fileUri, base64, { encoding: 'base64' });
+                    Alert.alert('Success', 'QR codes PDF saved to your Downloads.');
+                  } else if (Platform.OS === 'ios') {
+                    const MediaLibrary = await import('expo-media-library');
+                    const downloadDir = FileSystem.cacheDirectory;
+                    if (!downloadDir) throw new Error('No cache directory available');
+                    const fileUri = downloadDir + filename;
+                    const base64 = uri.split(',')[1];
+                    if (!base64) throw new Error('Invalid PDF data: base64 string is empty.');
+                    await FileSystem.writeAsStringAsync(fileUri, base64, { encoding: 'base64' });
+                    await MediaLibrary.saveToLibraryAsync(fileUri);
+                    Alert.alert('Success', 'QR codes PDF saved to your device\'s gallery.');
+                  } else {
+                    // Web platform - open in new tab
+                    window.open(uri, '_blank');
+                  }
+                } catch (error) {
+                  console.error('Error downloading QR codes:', error);
+                  Alert.alert('Error', 'Failed to download QR codes');
+                } finally {
+                  setDownloading(false);
+                }
+              }}
+            >
+              <Ionicons name="download-outline" size={20} color="white" />
+              <ThemedText style={styles.downloadButtonText}>
+                {downloading ? 'Downloading...' : 'All QR Codes'}
+              </ThemedText>
+            </TouchableOpacity>
+          )}
+          {user?.role === 'SUPER_ADMIN' && (
+            <TouchableOpacity style={styles.addButton} onPress={handleCreateAsset}>
+              <Ionicons name="add" size={24} color="white" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {assets.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="cube-outline" size={64} color="#ccc" />
+          <ThemedText style={styles.emptyText}>No assets found</ThemedText>
+          {user?.role === 'SUPER_ADMIN' && (
+            <TouchableOpacity style={styles.createButton} onPress={handleCreateAsset}>
+              <ThemedText style={styles.createButtonText}>Create First Asset</ThemedText>
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : (
+        <FlatList
+          data={assets}
+          renderItem={renderAsset}
+          keyExtractor={(item) => item._id}
+          contentContainerStyle={styles.listContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      )}
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  downloadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  downloadButtonDisabled: {
+    opacity: 0.6,
+  },
+  downloadButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 6,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listContainer: {
+    padding: 16,
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  assetInfo: {
+    flex: 1,
+  },
+  assetName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  assetTag: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  statusText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textTransform: 'capitalize',
+  },
+  description: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  details: {
+    marginBottom: 12,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+  },
+  assetFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  scanInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  scanText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+  },
+  lastScanned: {
+    fontSize: 12,
+    color: '#999',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#666',
+    marginTop: 16,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  createButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  createButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  loginPrompt: {
+    fontSize: 18,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  loginButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  loginButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+});
